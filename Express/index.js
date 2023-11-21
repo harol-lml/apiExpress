@@ -1,7 +1,7 @@
 const express = require('express')
 const filmJson = require('./film.json')
 const crypto = require('node:crypto')
-const {validateFilm} = require('./schemas/film')
+const {validateFilm, validateParcialFilm} = require('./schemas/film')
 
 const app = express()
 
@@ -30,6 +30,7 @@ app.get('/', (req, res) => {
 })
 
 app.get('/film', (req, res) => {
+    res.header('Access-Control-Allow-Origin','*')
     const { genere } = req.query
     if(genere){
         const filter = filmJson.filter(
@@ -63,6 +64,26 @@ app.post('/film', (req,res) => {
     }
     filmJson.push(newFilm)
     res.status(201).json(newFilm)
+})
+
+app.patch('/film/:id', (req, res) => {
+    const result = validateParcialFilm(req.body)
+
+    if(!result.success) return res.status(404).json({error: JSON.parse(result.error.message)})
+
+    const {id} = req.params
+    const filmIndex = filmJson.findIndex(f => f.id === id)
+
+    if(filmIndex === -1) return res.status(404).json({message: 'Film not found'})
+
+    const updateFilm = {
+        ...filmJson[filmIndex],
+        ...result.data
+    }
+
+    filmJson[filmIndex] = updateFilm
+
+    return res.json(updateFilm)
 })
 
 app.use((req, res) => res.status(404).send('<h1>404</h1>'))

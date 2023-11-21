@@ -25,4 +25,8 @@ function validateFilm(object){
     return filmSchema.safeParse(object)
 }
 
-module.exports= {validateFilm}
+function validateParcialFilm(object){
+    return filmSchema.partial().safeParse(object)
+}
+
+module.exports= {validateFilm, validateParcialFilm}
