@@ -1,6 +1,7 @@
 const express = require('express')
 const filmJson = require('./film.json')
 const crypto = require('node:crypto')
+const cors = require('cors')
 const {validateFilm, validateParcialFilm} = require('./schemas/film')
 
 const app = express()
@@ -8,7 +9,7 @@ const app = express()
 const PORT = process.env.PORT ?? 3000
 
 app.disable('x-powered-by')
-
+app.use(cors());
 app.use(express.json())
 /* app.use((req, res, next) => {
     if(req.method !== 'POST') return next()
@@ -30,7 +31,6 @@ app.get('/', (req, res) => {
 })
 
 app.get('/film', (req, res) => {
-    res.header('Access-Control-Allow-Origin','*')
     const { genere } = req.query
     if(genere){
         const filter = filmJson.filter(
@@ -85,6 +85,23 @@ app.patch('/film/:id', (req, res) => {
 
     return res.json(updateFilm)
 })
+
+app.delete('/film/:id', (req, res) => {
+    const {id} = req.params
+    const filmIndex = filmJson.findIndex(f => f.id === id)
+
+    if(filmIndex === -1) return res.status(404).json({message: 'Film not found'})
+
+    filmJson.splice(filmIndex, 1)
+
+    return res.json({message: 'Film deleted'})
+})
+
+/* app.options('film/:id', (req, res) =>{
+    res.header('Access-Control-Allow-Origin','http://localhost:5500')
+    res.header('Access-Control-Allow-Methods','DELETE, GET, POST, PUT, PATCH')
+    res.send(200)
+}) */
 
 app.use((req, res) => res.status(404).send('<h1>404</h1>'))
 

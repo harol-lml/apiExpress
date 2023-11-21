@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset='utf-8'>
+    <meta http-equiv='X-UA-Compatible' content='IE=edge'>
+    <title>Page Title</title>
+    <meta name='viewport' content='width=device-width, initial-scale=1'>
+    <link rel='stylesheet' type='text/css' media='screen' href='main.css'>
+    <script src='main.js'></script>
+</head>
+<body>
+</body>
+<script>
+
+fetch('http://localhost:3000/film/dcdd0fad-a94c-4810-8acc-5f108d3b18c3',{
+  method:'DELETE'
+})
+  .then(response => {
+    if(response.ok)
+      console.log(response.ok);
+  })
+  // .then(data => console.log(data));
+
+  fetch('http://localhost:3000/film/dcdd0fad-a94c-4810-8acc-5f108d3b18c3')
+  .then(response => response.json())
+  .then(data => console.log(data));
+</script>
+</html>
