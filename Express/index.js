@@ -1,16 +1,20 @@
-const express = require('express')
-const filmJson = require('./film.json')
-const crypto = require('node:crypto')
-const cors = require('cors')
-const {validateFilm, validateParcialFilm} = require('./schemas/film')
+import express, { json } from 'express'
+// import filmJson from './film.json' with { type: 'json'}
+import { randomUUID } from 'node:crypto'
+import cors from 'cors'
+import { validateFilm, validateParcialFilm } from './schemas/film.js'
 
+import { createRequire } from 'node:module'
+
+const require = createRequire(import.meta.url)
+const filmJson = require('./film.json')
 const app = express()
 
 const PORT = process.env.PORT ?? 3000
 
 app.disable('x-powered-by')
 app.use(cors());
-app.use(express.json())
+app.use(json())
 /* app.use((req, res, next) => {
     if(req.method !== 'POST') return next()
 
@@ -59,7 +63,7 @@ app.post('/film', (req,res) => {
         return res.status(400).json({ error: JSON.parse(result.error.message) })
 
     const newFilm = {
-        id: crypto.randomUUID(), // crea uuid en version 4
+        id: randomUUID(), // crea uuid en version 4
         ...result.data
     }
     filmJson.push(newFilm)
