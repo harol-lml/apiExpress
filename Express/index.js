@@ -1,5 +1,8 @@
 const express = require('express')
 const filmJson = require('./film.json')
+const crypto = require('node:crypto')
+const {validateFilm} = require('./schemas/film')
+
 const app = express()
 
 const PORT = process.env.PORT ?? 3000
@@ -47,8 +50,19 @@ app.get('/film/:id', (req, res) => {
     res.status(404).json({message: "film no found"})
 })
 
-app.post('/dogs', (req,res) => {
-    res.status(201).json(req.body)
+app.post('/film', (req,res) => {
+
+    const result = validateFilm(req.body)
+
+    if(result.error)
+        return res.status(400).json({ error: JSON.parse(result.error.message) })
+
+    const newFilm = {
+        id: crypto.randomUUID(), // crea uuid en version 4
+        ...result.data
+    }
+    filmJson.push(newFilm)
+    res.status(201).json(newFilm)
 })
 
 app.use((req, res) => res.status(404).send('<h1>404</h1>'))
