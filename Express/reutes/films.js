@@ -1,76 +1,52 @@
 import { Router } from 'express'
-import { randomUUID } from 'node:crypto'
 import { validateFilm, validateParcialFilm } from '../schemas/film.js'
-import { createRequire } from 'node:module'
-
-const require = createRequire(import.meta.url)
-const filmJson = require('../film.json')
+import { FilmModel } from '../models/film.js'
 
 export const filmRouter = Router()
 
-filmRouter.get('/', (req, res) => {
+filmRouter.get('/', async (req, res) => {
     const { genere } = req.query
-    if(genere){
-        const filter = filmJson.filter(
-            film => film.genre.some(g => g.toLocaleLowerCase() === genere.toLocaleLowerCase())
-        )
+    const films = await FilmModel.getAll({genere})
 
-        return res.json(filter)
-    }
-    res.json(filmJson)
+    res.json(films)
 })
 
-filmRouter.get('/:id', (req, res) => {
+filmRouter.get('/:id', async (req, res) => {
     const {id} = req.params
 
-    const film = filmJson.find(film => film.id == id)
+    const film = await FilmModel.getById({ id })
     if (film) return res.json(film)
 
     res.status(404).json({message: "film no found"})
 })
 
-filmRouter.post('/', (req,res) => {
+filmRouter.post('/', async (req,res) => {
 
     const result = validateFilm(req.body)
 
     if(result.error)
         return res.status(400).json({ error: JSON.parse(result.error.message) })
 
-    const newFilm = {
-        id: randomUUID(), // crea uuid en version 4
-        ...result.data
-    }
-    filmJson.push(newFilm)
+    const newFilm = await FilmModel.create({input: result.data})
     res.status(201).json(newFilm)
 })
 
-filmRouter.patch('/:id', (req, res) => {
+filmRouter.patch('/:id', async (req, res) => {
     const result = validateParcialFilm(req.body)
 
     if(!result.success) return res.status(404).json({error: JSON.parse(result.error.message)})
 
     const {id} = req.params
-    const filmIndex = filmJson.findIndex(f => f.id === id)
+    const updateFilm = await FilmModel.update({input: result.data, id})
 
-    if(filmIndex === -1) return res.status(404).json({message: 'Film not found'})
-
-    const updateFilm = {
-        ...filmJson[filmIndex],
-        ...result.data
-    }
-
-    filmJson[filmIndex] = updateFilm
-
+    if(!updateFilm) return res.status(404).json({message: 'Film not found'})
     return res.json(updateFilm)
 })
 
-filmRouter.delete('/:id', (req, res) => {
+filmRouter.delete('/:id', async (req, res) => {
     const {id} = req.params
-    const filmIndex = filmJson.findIndex(f => f.id === id)
+    const film = await FilmModel.delete({ id })
 
-    if(filmIndex === -1) return res.status(404).json({message: 'Film not found'})
-
-    filmJson.splice(filmIndex, 1)
-
+    if (!film) return res.status(404).json({message: 'Film not found'})
     return res.json({message: 'Film deleted'})
 })
