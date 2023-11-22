@@ -5,8 +5,8 @@ import { FilmModel } from '../models/film.js'
 export const filmRouter = Router()
 
 filmRouter.get('/', async (req, res) => {
-    const { genere } = req.query
-    const films = await FilmModel.getAll({genere})
+    const { genre } = req.query
+    const films = await FilmModel.getAll({genre})
 
     res.json(films)
 })
