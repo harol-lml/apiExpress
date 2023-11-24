@@ -1,5 +1,4 @@
 import express, { json } from 'express'
-import cors from 'cors'
 import { filmRouter } from './reutes/films.js'
 import { corsMiddleware } from './middlewares/cors.js'
 // import filmJson from './film.json' with { type: 'json'}

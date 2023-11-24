@@ -2,7 +2,7 @@ import { createRequire } from 'node:module'
 import { randomUUID } from 'node:crypto'
 
 const require = createRequire(import.meta.url)
-const filmJson = require('../film.json')
+const filmJson = require('../../film.json')
 
 export class FilmModel {
     static getAll = async ({ genre }) => {
