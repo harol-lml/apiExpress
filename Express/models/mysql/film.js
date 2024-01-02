@@ -1,5 +1,6 @@
 import mysql from 'mysql2/promise'
 import envPro from 'dotenv'
+import { randomUUID } from 'node:crypto'
 
 envPro.config() // to read env
 let user = process.env.DB_USER // MSQL db user
@@ -42,7 +43,14 @@ export class FilmModel {
   }
 
   static async delete({ id }){
+    const regexExp = /^[0-9a-fA-F]{8}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{12}$/gi
+    if(!regexExp.test(id)) return false
 
+    let ge = id ? ` DELETE FROM films f WHERE BIN_TO_UUID(f.id) = '${id}';` : ''
+
+    const [films, tableInf] = await connection.query(ge)
+
+    return films
   }
 
   static async update({input, id}){
