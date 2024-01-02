@@ -1,6 +1,5 @@
 import mysql from 'mysql2/promise'
 import envPro from 'dotenv'
-import { randomUUID } from 'node:crypto'
 
 envPro.config() // to read env
 let user = process.env.DB_USER // MSQL db user
@@ -39,7 +38,10 @@ export class FilmModel {
   }
 
   static async create({ input }){
-
+    const [films, tableInf] = await connection.query(
+      `INSERT INTO  films (id, title, year, director, duration, poster, rate) VALUES (UUID_TO_BIN(UUID()),"${input.title}",${input.year},"${input.director}",${input.duration}, "${input.poster}",${input.rate})`
+    )
+    return films
   }
 
   static async delete({ id }){
@@ -55,5 +57,16 @@ export class FilmModel {
 
   static async update({input, id}){
 
+    let dataUpdate = ''
+    if(input.title)     dataUpdate += ` title = "${input.title}",`
+    if(input.year)      dataUpdate += ` year = ${input.year},`
+    if(input.director)  dataUpdate += ` director = "${input.director}",`
+    if(input.duration)  dataUpdate += ` duration = ${input.duration},`
+    if(input.poster)    dataUpdate += ` poster = "${input.poster}",`
+    if(input.rate)      dataUpdate += ` rate = ${input.rate},`
+    dataUpdate = dataUpdate.slice(0, -1)
+
+    const [films, tableInf] = await connection.query(`UPDATE films f set ${dataUpdate} WHERE BIN_TO_UUID(f.id) = '${id}';`)
+    return films
   }
 }
