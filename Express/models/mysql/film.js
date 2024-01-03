@@ -26,14 +26,32 @@ export class FilmModel {
       'SELECT BIN_TO_UUID(f.id) as id, title , `year` , director , duration , poster , rate FROM films f'+ge
     )
 
+    for (const key in films) {
+      const genre =  await this.getRelation({filmId: films[key].id});
+      films[key] = {
+        ...films[key],
+        genre: genre
+      }
+    }
     return films
   }
 
   static async getById({ id }){
-    id = id ? id : ''
+
+    const regexExp = /^[0-9a-fA-F]{8}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{12}$/gi
+    if(!regexExp.test(id)) return false
+
     const [films, tableInf] = await connection.query(
       `SELECT BIN_TO_UUID(f.id) as id, title , year , director , duration , poster , rate FROM films f WHERE BIN_TO_UUID(f.id) = '${id}'`
     )
+
+    if(!films[0]) return films
+
+    const genre =  await this.getRelation({filmId: films[0].id});
+    films[0] = {
+      ...films[0],
+      genre: genre
+    }
     return films
   }
 
@@ -68,5 +86,19 @@ export class FilmModel {
 
     const [films, tableInf] = await connection.query(`UPDATE films f set ${dataUpdate} WHERE BIN_TO_UUID(f.id) = '${id}';`)
     return films
+  }
+
+  static async getRelation({ filmId }){
+
+    const [genrs, tableInf] = await connection.query(
+      `SELECT g.name FROM genres g
+      INNER JOIN film_genre fg ON fg.genre_id = g.id
+      INNER JOIN films f ON f.id = fg.film_id
+      WHERE BIN_TO_UUID(f.id) = '${filmId}'`
+    )
+
+    let g = genrs.map(({name}) => name)
+
+    return g
   }
 }
