@@ -86,7 +86,9 @@ export class FilmModel {
     if(input.rate)      dataUpdate += ` rate = ${input.rate},`
     dataUpdate = dataUpdate.slice(0, -1)
 
-    if(input.genre){
+    const [films, tableInf] = await connection.query(`UPDATE films f set ${dataUpdate} WHERE BIN_TO_UUID(f.id) = '${id}';`)
+
+    if(input.genre && films.affectedRows > 0){
       let geRel = id ? ` DELETE FROM film_genre fg WHERE BIN_TO_UUID(fg.film_id) = '${id}';` : '' // Para eliminar la relacion pelicula <-> genero
       let genRelation = ''
       const [genFilms, genTableInf] = await connection.query(geRel)
@@ -98,7 +100,6 @@ export class FilmModel {
       }
     }
 
-    const [films, tableInf] = await connection.query(`UPDATE films f set ${dataUpdate} WHERE BIN_TO_UUID(f.id) = '${id}';`)
     return films
   }
 
