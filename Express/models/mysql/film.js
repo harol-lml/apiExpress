@@ -21,10 +21,10 @@ export class FilmModel {
   static async getAll ({ genre }) {
     let ge = genre ? ` INNER JOIN film_genre fg on fg.film_id = f.id
     INNER JOIN genres g on g.id  = fg.genre_id
-    WHERE g.name ='${genre}';` : ''
+    WHERE LOWER(g.name) = ?;` : ''
 
     const [films, tableInf] = await connection.query(
-      'SELECT BIN_TO_UUID(f.id) as id, title , `year` , director , duration , poster , rate FROM films f'+ge
+      'SELECT BIN_TO_UUID(f.id) as id, title , `year` , director , duration , poster , rate FROM films f'+ge,[genre]
     )
 
     for (const key in films) {
@@ -43,7 +43,7 @@ export class FilmModel {
     if(!regexExp.test(id)) return false
 
     const [films, tableInf] = await connection.query(
-      `SELECT BIN_TO_UUID(f.id) as id, title , year , director , duration , poster , rate FROM films f WHERE BIN_TO_UUID(f.id) = '${id}'`
+      `SELECT BIN_TO_UUID(f.id) as id, title , year , director , duration , poster , rate FROM films f WHERE BIN_TO_UUID(f.id) = ?`,[id]
     )
 
     if(!films[0]) return films
@@ -59,7 +59,7 @@ export class FilmModel {
   static async create({ input }){
     const id = randomUUID()
     const [films, tableInf] = await connection.query(
-      `INSERT INTO  films (id, title, year, director, duration, poster, rate) VALUES (UUID_TO_BIN('${id}'),"${input.title}",${input.year},"${input.director}",${input.duration}, "${input.poster}",${input.rate})`
+      `INSERT INTO  films (id, title, year, director, duration, poster, rate) VALUES (UUID_TO_BIN(?),?,?,?,?,?,?)`,[id,input.title,input.year,input.director,input.duration,input.poster,input.rate]
     )
 
     if(input.genre){
@@ -67,8 +67,8 @@ export class FilmModel {
 
       for (const key in input.genre) {
         genRelation = `INSERT  INTO film_genre (film_id, genre_id) values
-        ((SELECT id FROM films WHERE BIN_TO_UUID(id) = '${id}'), (SELECT id FROM genres WHERE name = "${input.genre[key]}"))`
-        const [pachFilms, pathInf] = await connection.query(genRelation)
+        ((SELECT id FROM films WHERE BIN_TO_UUID(id) = ?), (SELECT id FROM genres WHERE name = ?))`
+        const [pachFilms, pathInf] = await connection.query(genRelation,[id,input.genre[key]])
       }
     }
     return films
@@ -78,11 +78,11 @@ export class FilmModel {
     const regexExp = /^[0-9a-fA-F]{8}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{12}$/gi
     if(!regexExp.test(id)) return false
 
-    let ge = id ? ` DELETE FROM films f WHERE BIN_TO_UUID(f.id) = '${id}';` : ''
-    let geRel = id ? ` DELETE FROM film_genre fg WHERE BIN_TO_UUID(fg.film_id) = '${id}';` : '' // Para eliminar la relacion pelicula <-> genero
+    let ge = id ? ` DELETE FROM films f WHERE BIN_TO_UUID(f.id) = ?;` : ''
+    let geRel = id ? ` DELETE FROM film_genre fg WHERE BIN_TO_UUID(fg.film_id) = ?;` : '' // Para eliminar la relacion pelicula <-> genero
 
-    const [films, tableInf] = await connection.query(ge)
-    const [genFilms, genTableInf] = await connection.query(geRel)
+    const [films, tableInf] = await connection.query(ge,[id])
+    const [genFilms, genTableInf] = await connection.query(geRel,[id])
 
     return films
   }
@@ -98,7 +98,7 @@ export class FilmModel {
     if(input.rate)      dataUpdate += ` rate = ${input.rate},`
     dataUpdate = dataUpdate.slice(0, -1)
 
-    const [films, tableInf] = await connection.query(`UPDATE films f set ${dataUpdate} WHERE BIN_TO_UUID(f.id) = '${id}';`)
+    const [films, tableInf] = await connection.query(`UPDATE films f set ${dataUpdate} WHERE BIN_TO_UUID(f.id) = ?;`,[id])
 
     if(input.genre && films.affectedRows > 0){
       let geRel = id ? ` DELETE FROM film_genre fg WHERE BIN_TO_UUID(fg.film_id) = '${id}';` : '' // Para eliminar la relacion pelicula <-> genero
@@ -121,7 +121,7 @@ export class FilmModel {
       `SELECT g.name FROM genres g
       INNER JOIN film_genre fg ON fg.genre_id = g.id
       INNER JOIN films f ON f.id = fg.film_id
-      WHERE BIN_TO_UUID(f.id) = '${filmId}'`
+      WHERE BIN_TO_UUID(f.id) = ?`,[filmId]
     )
 
     let g = genrs.map(({name}) => name)
