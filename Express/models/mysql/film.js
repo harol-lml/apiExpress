@@ -1,5 +1,6 @@
 import mysql from 'mysql2/promise'
 import envPro from 'dotenv'
+import { randomUUID } from 'node:crypto'
 
 envPro.config() // to read env
 let user = process.env.DB_USER // MSQL db user
@@ -56,9 +57,20 @@ export class FilmModel {
   }
 
   static async create({ input }){
+    const id = randomUUID()
     const [films, tableInf] = await connection.query(
-      `INSERT INTO  films (id, title, year, director, duration, poster, rate) VALUES (UUID_TO_BIN(UUID()),"${input.title}",${input.year},"${input.director}",${input.duration}, "${input.poster}",${input.rate})`
+      `INSERT INTO  films (id, title, year, director, duration, poster, rate) VALUES (UUID_TO_BIN('${id}'),"${input.title}",${input.year},"${input.director}",${input.duration}, "${input.poster}",${input.rate})`
     )
+
+    if(input.genre){
+      let genRelation = ''
+
+      for (const key in input.genre) {
+        genRelation = `INSERT  INTO film_genre (film_id, genre_id) values
+        ((SELECT id FROM films WHERE BIN_TO_UUID(id) = '${id}'), (SELECT id FROM genres WHERE name = "${input.genre[key]}"))`
+        const [pachFilms, pathInf] = await connection.query(genRelation)
+      }
+    }
     return films
   }
 
