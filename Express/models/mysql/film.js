@@ -71,7 +71,8 @@ export class FilmModel {
         const [pachFilms, pathInf] = await connection.query(genRelation,[id,input.genre[key]])
       }
     }
-    return films
+
+    return this.getById({id})
   }
 
   static async delete({ id }){
@@ -112,7 +113,7 @@ export class FilmModel {
       }
     }
 
-    return films
+    return this.getById({id})
   }
 
   static async getRelation({ filmId }){
