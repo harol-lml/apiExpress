@@ -67,8 +67,10 @@ export class FilmModel {
     if(!regexExp.test(id)) return false
 
     let ge = id ? ` DELETE FROM films f WHERE BIN_TO_UUID(f.id) = '${id}';` : ''
+    let geRel = id ? ` DELETE FROM film_genre fg WHERE BIN_TO_UUID(fg.film_id) = '${id}';` : '' // Para eliminar la relacion pelicula <-> genero
 
     const [films, tableInf] = await connection.query(ge)
+    const [genFilms, genTableInf] = await connection.query(geRel)
 
     return films
   }
